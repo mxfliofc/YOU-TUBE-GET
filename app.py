@@ -99,7 +99,7 @@ TEMPLATE = """
     </style>
 </head>
 <body>
-    <h1>MX YOUT NO ADS</h1>
+    <h1>NA MX, VOCÊ NÃO VERÁ ADS</h1>
     <form id="videoForm" action="/yout/mx/url" method="post">
         <input type="text" name="url" placeholder="Enter YouTube video URL" required>
         <button type="submit">Play Video</button>
