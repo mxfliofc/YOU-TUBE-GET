@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string
+from flask import Flask, request, render_template_string, redirect
 from pytube import YouTube
 import re
 import os
@@ -24,6 +24,14 @@ def index():
 @app.route('/yout/mx/url', methods=['POST'])
 def video():
     youtube_url = request.form.get('url')
+    return handle_video_request(youtube_url)
+
+@app.route('/yout/mx/URL/<path:youtube_url>')
+def video_from_path(youtube_url):
+    youtube_url = youtube_url.replace(":/", "://")
+    return handle_video_request(youtube_url)
+
+def handle_video_request(youtube_url):
     if youtube_url:
         video_id = extract_video_id(youtube_url)
         if video_id:
@@ -133,3 +141,4 @@ TEMPLATE = """
 
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    
