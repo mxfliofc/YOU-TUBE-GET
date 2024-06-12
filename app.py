@@ -45,7 +45,7 @@ def handle_video_request(youtube_url, redirect_to_index):
                 if redirect_to_index:
                     return redirect(url_for('index', video_url=video_url))
                 else:
-                    return render_template_string(TEMPLATE, video_url=video_url, error=None)
+                    return redirect(video_url)
             except Exception as e:
                 error_message = "Failed to load the video. Please try again."
                 if redirect_to_index:
