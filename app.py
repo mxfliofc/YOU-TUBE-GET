@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string, redirect
+from flask import Flask, request, render_template_string, redirect, url_for
 from pytube import YouTube
 import re
 import os
@@ -19,19 +19,21 @@ def extract_video_id(url):
 
 @app.route('/')
 def index():
-    return render_template_string(TEMPLATE, video_url=None, error=None)
+    video_url = request.args.get('video_url')
+    error = request.args.get('error')
+    return render_template_string(TEMPLATE, video_url=video_url, error=error)
 
 @app.route('/yout/mx/url', methods=['POST'])
 def video():
     youtube_url = request.form.get('url')
-    return handle_video_request(youtube_url)
+    return handle_video_request(youtube_url, redirect_to_index=True)
 
 @app.route('/yout/mx/URL/<path:youtube_url>')
 def video_from_path(youtube_url):
     youtube_url = youtube_url.replace(":/", "://")
-    return handle_video_request(youtube_url)
+    return handle_video_request(youtube_url, redirect_to_index=False)
 
-def handle_video_request(youtube_url):
+def handle_video_request(youtube_url, redirect_to_index):
     if youtube_url:
         video_id = extract_video_id(youtube_url)
         if video_id:
@@ -40,10 +42,21 @@ def handle_video_request(youtube_url):
                 yt = YouTube(youtube_url)
                 video_stream = yt.streams.filter(file_extension='mp4', progressive=True).order_by('resolution').desc().first()
                 video_url = video_stream.url
-                return render_template_string(TEMPLATE, video_url=video_url, error=None)
+                if redirect_to_index:
+                    return redirect(url_for('index', video_url=video_url))
+                else:
+                    return render_template_string(TEMPLATE, video_url=video_url, error=None)
             except Exception as e:
-                return render_template_string(TEMPLATE, video_url=None, error="Failed to load the video. Please try again.")
-    return render_template_string(TEMPLATE, video_url=None, error="Invalid URL. Please enter a valid YouTube URL.")
+                error_message = "Failed to load the video. Please try again."
+                if redirect_to_index:
+                    return redirect(url_for('index', error=error_message))
+                else:
+                    return render_template_string(TEMPLATE, video_url=None, error=error_message)
+    error_message = "Invalid URL. Please enter a valid YouTube URL."
+    if redirect_to_index:
+        return redirect(url_for('index', error=error_message))
+    else:
+        return render_template_string(TEMPLATE, video_url=None, error=error_message)
 
 TEMPLATE = """
 <!doctype html>
@@ -113,7 +126,7 @@ TEMPLATE = """
         <button type="submit">Play Video</button>
     </form>
     <div id="loader" class="loader" style="display:none;"></div>
-    <div id="videoContainer" style="display:none;">
+    <div id="videoContainer" style="display:{{ 'block' if video_url else 'none' }};">
         {% if video_url %}
             <video controls width="600">
                 <source src="{{ video_url }}" type="video/mp4">
@@ -129,7 +142,7 @@ TEMPLATE = """
             document.getElementById('videoContainer').style.display = 'none';
         });
         window.onload = function() {
-            if ({{ video_url | tojson | safe }}) {
+            if ("{{ video_url }}") {
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('videoContainer').style.display = 'block';
             }
