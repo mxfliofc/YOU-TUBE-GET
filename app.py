@@ -58,6 +58,19 @@ def handle_video_request(youtube_url, redirect_to_index):
     else:
         return render_template_string(TEMPLATE, video_url=None, error=error_message)
 
+@app.route('/get-video/mxfliofc-vip/<path:url>', methods=['GET'])
+def redirect_video(url):
+    try:
+        # Construir a nova URL modificada
+        base_url = url.rsplit('/', 1)[0]
+        video_id = url.split('/')[-1]
+        new_url = f"{base_url}/f/{video_id}_x"
+
+        # Redirecionar para a nova URL
+        return redirect(new_url, code=302)
+    except Exception as e:
+        return str(e), 500
+
 TEMPLATE = """
 <!doctype html>
 <html>
