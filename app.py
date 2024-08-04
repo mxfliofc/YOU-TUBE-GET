@@ -1,10 +1,33 @@
-from flask import Flask, request, render_template_string, redirect, url_for
-from pytube import YouTube
+from flask import Flask, request, redirect, render_template_string
 import re
 import os
 
 app = Flask(__name__)
 
+# Página inicial para exibir uma mensagem
+@app.route('/')
+def home():
+    return "GET USER VIP"
+
+# Função de redirecionamento
+@app.route('/get-video/mxfliofc-vip/<path:url>', methods=['GET'])
+def redirect_video(url):
+    try:
+        # Extrair a parte relevante da URL
+        match = re.match(r'https://(.+)/e/(.+)', url)
+        if not match:
+            return "Invalid URL format", 400
+        
+        base_url = match.group(1)
+        video_id = match.group(2)
+        new_url = f"https://{base_url}/f/{video_id}_x"
+        
+        # Redirecionar para a nova URL
+        return redirect(new_url, code=302)
+    except Exception as e:
+        return str(e), 500
+
+# Funções para a funcionalidade do YouTube
 def extract_video_id(url):
     video_id = None
     if 'youtube.com' in url:
@@ -16,12 +39,6 @@ def extract_video_id(url):
         if match:
             video_id = match.group(1)
     return video_id
-
-@app.route('/')
-def index():
-    video_url = request.args.get('video_url')
-    error = request.args.get('error')
-    return render_template_string(TEMPLATE, video_url=video_url, error=error)
 
 @app.route('/yout/mx/url', methods=['POST'])
 def video():
@@ -57,19 +74,6 @@ def handle_video_request(youtube_url, redirect_to_index):
         return redirect(url_for('index', error=error_message))
     else:
         return render_template_string(TEMPLATE, video_url=None, error=error_message)
-
-@app.route('/get-video/mxfliofc-vip/<path:url>', methods=['GET'])
-def redirect_video(url):
-    try:
-        # Construir a nova URL modificada
-        base_url = url.rsplit('/', 1)[0]
-        video_id = url.split('/')[-1]
-        new_url = f"{base_url}/f/{video_id}_x"
-
-        # Redirecionar para a nova URL
-        return redirect(new_url, code=302)
-    except Exception as e:
-        return str(e), 500
 
 TEMPLATE = """
 <!doctype html>
@@ -167,4 +171,4 @@ TEMPLATE = """
 
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-    
+                
